@@ -1,0 +1,144 @@
+import React, { useEffect, useState } from 'react';
+import { useApp, api } from '../context/AppContext';
+import { Check, CheckCircle2, Award, Info } from 'lucide-react';
+import { motion } from 'framer-motion';
+import confetti from 'canvas-confetti';
+
+interface Activity {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string;
+  points: number;
+}
+
+export const Aktivitas: React.FC = () => {
+  const { selectedChild, earnPoints, isLoading: isAppLoading } = useApp();
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchActivities = async () => {
+    try {
+      const res = await api.get('/activities');
+      setActivities(res.data);
+    } catch (err) {
+      console.error('Error fetching activities:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const handleComplete = async (activity: Activity) => {
+    if (!selectedChild) return;
+    
+    // Quick confirmation since it is operated by parents
+    const confirmDone = window.confirm(`Apakah ${selectedChild.name} sudah menyelesaikan: "${activity.name}"?`);
+    if (!confirmDone) return;
+
+    setLoadingMap((prev) => ({ ...prev, [activity.id]: true }));
+    const success = await earnPoints(activity.id);
+    setLoadingMap((prev) => ({ ...prev, [activity.id]: false }));
+
+    if (success) {
+      // Trigger confetti!
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.7 },
+        colors: ['#38bdf8', '#818cf8', '#fbbf24', '#34d399', '#f87171'],
+      });
+    } else {
+      alert('Gagal mencatat poin. Silakan coba lagi.');
+    }
+  };
+
+  if (loading || isAppLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+        <span className="text-sm">Memuat daftar aktivitas...</span>
+      </div>
+    );
+  }
+
+  if (!selectedChild) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 h-full text-center">
+        <Info size={40} className="text-slate-300 mb-2" />
+        <p className="text-slate-500 text-sm">Pilih anak terlebih dahulu di bagian atas untuk mencatat aktivitas.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-5 pb-28 flex flex-col gap-5">
+      <div>
+        <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Daftar Aktivitas Baik</h2>
+        <p className="text-xs text-slate-500 mt-1">
+          Pilih aktivitas yang diselesaikan **{selectedChild.name}** untuk memberikan poin bintang!
+        </p>
+      </div>
+
+      {activities.length === 0 ? (
+        <div className="bg-white border border-dashed border-slate-200 rounded-3xl p-8 text-center text-slate-400">
+          Belum ada aktivitas. Silakan buat aktivitas baru di tab Admin.
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {activities.map((activity, idx) => {
+            const isItemLoading = loadingMap[activity.id] || false;
+            return (
+              <motion.div
+                key={activity.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between gap-3 group hover:border-primary-100 transition-colors"
+              >
+                {/* Icon & Details */}
+                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                  <div className="bg-primary-50 text-primary-600 p-3 rounded-2xl font-bold text-2xl flex items-center justify-center shrink-0">
+                    {/* Render a default icon/emoji if Lucide name doesn't match directly, or simple emojis */}
+                    <span className="text-2xl" role="img" aria-label="activity-icon">
+                      {activity.icon.length <= 2 ? activity.icon : '✨'}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-sm text-slate-800 truncate leading-snug">{activity.name}</h3>
+                    {activity.description && (
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{activity.description}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Point Button */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg shrink-0">
+                    +{activity.points} ⭐️
+                  </span>
+                  
+                  <button
+                    disabled={isItemLoading}
+                    onClick={() => handleComplete(activity)}
+                    className="bg-primary-600 hover:bg-primary-700 text-white p-2.5 rounded-xl shadow-md shadow-primary-500/10 active:scale-90 disabled:opacity-50 transition-all flex items-center justify-center shrink-0"
+                  >
+                    {isItemLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Check size={16} strokeWidth={3} />
+                    )}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};

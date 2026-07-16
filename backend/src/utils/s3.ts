@@ -3,8 +3,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const s3Endpoint = process.env.GARAGE_ENDPOINT || process.env.S3_ENDPOINT || '';
+
 const s3Client = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,
+  endpoint: s3Endpoint,
   region: process.env.S3_REGION || 'us-east-1',
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
@@ -26,8 +28,15 @@ export const uploadToGarage = async (file: Express.Multer.File): Promise<string>
     })
   );
 
-  const endpoint = process.env.S3_ENDPOINT?.replace(/\/$/, '') || '';
+  const publicUrl = process.env.GARAGE_URL || process.env.S3_PUBLIC_URL || process.env.GARAGE_PUBLIC_URL;
+  if (publicUrl) {
+    const formattedUrl = publicUrl.replace(/\/$/, '');
+    return `${formattedUrl}/${fileKey}`;
+  }
+
+  const endpoint = s3Endpoint.replace(/\/$/, '') || '';
   return `${endpoint}/${bucket}/${fileKey}`;
 };
 
 export default s3Client;
+

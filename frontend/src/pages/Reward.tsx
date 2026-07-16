@@ -48,10 +48,10 @@ const renderCSSFloatingBadge = (reward: Reward, isSmall: boolean, flat = false) 
   const isUrl = reward.icon && (reward.icon.startsWith('http') || reward.icon.startsWith('/'));
   const transformClass = flat ? '' : 'transform rotateY(-15deg) rotateX(10deg)';
   
-  // Larger size for active 3D card, smaller for peek/grid cards
-  const sizeClass = isSmall ? 'w-20 h-20' : 'w-32 h-32';
-  const imgSizeClass = isSmall ? 'rounded-2xl' : 'rounded-[26px]';
-  const roundedClass = isSmall ? 'rounded-[24px]' : 'rounded-[32px]';
+  // Larger size for active slide 3D card, smaller for peek/grid cards
+  const sizeClass = isSmall ? 'w-20 h-20' : 'w-28 h-28';
+  const imgSizeClass = isSmall ? 'rounded-2xl' : 'rounded-[22px]';
+  const roundedClass = isSmall ? 'rounded-[24px]' : 'rounded-[28px]';
 
   if (isUrl) {
     const imgUrl = reward.icon.startsWith('/') ? `${API_URL}${reward.icon}` : reward.icon;
@@ -72,8 +72,8 @@ const renderCSSFloatingBadge = (reward: Reward, isSmall: boolean, flat = false) 
   
   // Emoji or fallback
   const emoji = reward.icon || '🎁';
-  const fontSizeClass = isSmall ? 'text-3xl' : 'text-6xl';
-  const insetRoundedClass = isSmall ? 'rounded-[22px]' : 'rounded-[30px]';
+  const fontSizeClass = isSmall ? 'text-3xl' : 'text-5xl';
+  const insetRoundedClass = isSmall ? 'rounded-[22px]' : 'rounded-[26px]';
   return (
     <div className={`bg-gradient-to-tr from-amber-50/70 via-white to-amber-100/30 border border-amber-200/50 shadow-md flex items-center justify-center relative ${transformClass} ${sizeClass} ${roundedClass} ${fontSizeClass}`}>
       <div className={`absolute inset-0.5 ${insetRoundedClass} bg-gradient-to-tr from-amber-400/10 to-yellow-300/5 blur-[1px]`} />
@@ -104,7 +104,7 @@ const FloatingHTMLTile3D: React.FC<{ reward: Reward }> = ({ reward }) => {
     <group ref={groupRef}>
       <Html 
         transform 
-        distanceFactor={0.85} // Decreased to make the element significantly larger
+        distanceFactor={6}
         style={{ pointerEvents: 'none' }}
       >
         <div className="select-none pointer-events-none">
@@ -463,13 +463,22 @@ export const Reward: React.FC = () => {
                     {reward.cost} ⭐️
                   </div>
 
-                  {/* Stage (Lightweight CSS Pedestal for better grid performance) */}
-                  <div className="h-28 relative w-full flex flex-col items-center justify-center perspective-3d bg-slate-50/50 rounded-2xl border border-slate-100 mt-2 pointer-events-none">
-                    <div className="absolute bottom-3 w-20 h-5 bg-slate-200/60 rounded-full border border-slate-350 transform rotateX(65deg)" />
-                    <div className="absolute bottom-4 w-12 h-3.5 bg-slate-900/5 rounded-full animate-shadow-scale animate-[shadowScale_4s_infinite_ease-in-out]" />
-                    <div className="absolute bottom-5 z-10 animate-float3d animate-[float3d_4s_infinite_ease-in-out]">
-                      {renderCSSFloatingBadge(reward, true)}
-                    </div>
+                  {/* Simple flat icon display for grid mode */}
+                  <div className="h-24 w-full flex items-center justify-center mt-1 pointer-events-none">
+                    {reward.icon && (reward.icon.startsWith('http') || reward.icon.startsWith('/')) ? (
+                      <img
+                        src={reward.icon.startsWith('/') ? `${API_URL}${reward.icon}` : reward.icon}
+                        alt={reward.name}
+                        className="w-20 h-20 object-cover rounded-2xl shadow-sm border border-slate-100"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <span className="text-5xl select-none leading-none">
+                        {reward.icon || '🎁'}
+                      </span>
+                    )}
                   </div>
 
                   {/* Title & Description */}

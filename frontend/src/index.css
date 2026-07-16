@@ -70,3 +70,65 @@ html, body, #root {
 .animate-shimmer {
   animation: shimmer 2.5s infinite linear;
 }
+
+.perspective-3d {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+@keyframes float3d {
+  0% {
+    transform: translateY(0px) translateZ(10px) rotateY(-15deg) rotateX(10deg);
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
+  }
+  50% {
+    transform: translateY(-16px) translateZ(40px) rotateY(-15deg) rotateX(10deg);
+    filter: drop-shadow(0 20px 25px rgba(0,0,0,0.25));
+  }
+  100% {
+    transform: translateY(0px) translateZ(10px) rotateY(-15deg) rotateX(10deg);
+    filter: drop-shadow(0 5px 10px rgba(0,0,0,0.15));
+  }
+}
+
+.animate-float3d {
+  animation: float3d 4s ease-in-out infinite;
+}
+
+@keyframes shadowScale {
+  0%, 100% {
+    transform: scale(1) rotateX(65deg);
+    opacity: 0.55;
+    filter: blur(4px);
+  }
+  50% {
+    transform: scale(0.75) rotateX(65deg);
+    opacity: 0.25;
+    filter: blur(6px);
+  }
+}
+
+.animate-shadow-scale {
+  animation: shadowScale 4s ease-in-out infinite;
+}
+
+@keyframes sparkleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 0.85;
+  }
+}
+
+.animate-sparkle-1 {
+  animation: sparkleFloat 3.2s ease-in-out infinite;
+}
+.animate-sparkle-2 {
+  animation: sparkleFloat 4.2s ease-in-out infinite 1s;
+}
+.animate-sparkle-3 {
+  animation: sparkleFloat 2.6s ease-in-out infinite 0.5s;
+}

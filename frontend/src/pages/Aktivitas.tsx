@@ -141,9 +141,9 @@ export const Aktivitas: React.FC = () => {
                     <ListTodo size={20} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-sm text-slate-800 truncate leading-snug">{activity.name}</h3>
+                    <h3 className="font-bold text-sm text-slate-800 leading-snug">{activity.name}</h3>
                     {activity.description && (
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">{activity.description}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 leading-snug">{activity.description}</p>
                     )}
                   </div>
                 </div>

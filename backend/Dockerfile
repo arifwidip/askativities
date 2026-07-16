@@ -11,11 +11,12 @@ RUN npm run build
 FROM node:18-alpine
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 3000
-# Run migrations during container startup
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+# Run database schema push and seeding during container startup
+CMD ["sh", "-c", "npx prisma db push && npx prisma db seed && node dist/index.js"]
+

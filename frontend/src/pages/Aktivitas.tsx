@@ -14,7 +14,7 @@ interface Activity {
 }
 
 export const Aktivitas: React.FC = () => {
-  const { selectedChild, earnPoints, isLoading: isAppLoading } = useApp();
+  const { selectedChild, earnPoints, showConfirm, isLoading: isAppLoading } = useApp();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
@@ -43,8 +43,14 @@ export const Aktivitas: React.FC = () => {
   const handleComplete = async (activity: Activity) => {
     if (!selectedChild) return;
     
-    // Quick confirmation since it is operated by parents
-    const confirmDone = window.confirm(`Apakah ${selectedChild.name} sudah menyelesaikan: "${activity.name}"?`);
+    // Custom premium confirmation modal
+    const confirmDone = await showConfirm({
+      title: 'Konfirmasi Aktivitas',
+      message: `Apakah ${selectedChild.name} sudah selesai melakukan "${activity.name}"?`,
+      confirmText: 'Ya, Sudah!',
+      cancelText: 'Belum',
+      type: 'success'
+    });
     if (!confirmDone) return;
 
     setLoadingMap((prev) => ({ ...prev, [activity.id]: true }));
@@ -60,7 +66,12 @@ export const Aktivitas: React.FC = () => {
         colors: ['#38bdf8', '#818cf8', '#fbbf24', '#34d399', '#f87171'],
       });
     } else {
-      alert('Gagal mencatat poin. Silakan coba lagi.');
+      await showConfirm({
+        title: 'Ups, Gagal',
+        message: 'Gagal mencatat poin bintang anak. Silakan coba lagi.',
+        confirmText: 'Mengerti',
+        type: 'danger'
+      });
     }
   };
 
@@ -119,15 +130,15 @@ export const Aktivitas: React.FC = () => {
             return (
               <motion.div
                 key={activity.id}
-                initial={{ opacity: 0, y: 15 }}
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ type: 'spring', stiffness: 280, damping: 22, delay: Math.min(idx * 0.04, 0.4) }}
                 className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between gap-3 group hover:border-primary-100 transition-colors"
               >
                 {/* Icon & Details */}
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <div className="bg-primary-50 text-primary-600 p-3 rounded-2xl flex items-center justify-center shrink-0">
-                    <ListTodo size={22} />
+                    <ListTodo size={20} />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-sm text-slate-800 truncate leading-snug">{activity.name}</h3>
@@ -139,14 +150,14 @@ export const Aktivitas: React.FC = () => {
 
                 {/* Point Button */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg shrink-0">
+                  <span className="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg shrink-0">
                     +{activity.points} ⭐️
                   </span>
                   
                   <button
                     disabled={isItemLoading}
                     onClick={() => handleComplete(activity)}
-                    className="bg-primary-600 hover:bg-primary-700 text-white p-2.5 rounded-xl shadow-md shadow-primary-500/10 active:scale-90 disabled:opacity-50 transition-all flex items-center justify-center shrink-0"
+                    className="bg-primary-600 hover:bg-primary-700 text-white p-2.5 rounded-xl shadow-md shadow-primary-500/10 active-press disabled:opacity-50 transition-colors flex items-center justify-center shrink-0"
                   >
                     {isItemLoading ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />

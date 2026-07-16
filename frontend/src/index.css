@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -11,6 +17,26 @@ html, body, #root {
   background-color: #f8fafc;
   color: #0f172a;
   -webkit-tap-highlight-color: transparent;
+}
+
+@layer utilities {
+  .ease-out-premium {
+    transition-timing-function: var(--ease-out);
+  }
+  .ease-spring-premium {
+    transition-timing-function: var(--ease-spring);
+  }
+  .transition-transform-premium {
+    transition-property: transform;
+    transition-duration: 200ms;
+    transition-timing-function: var(--ease-out);
+  }
+  .active-press {
+    transition: transform 120ms var(--ease-out);
+  }
+  .active-press:active {
+    transform: scale(0.96);
+  }
 }
 
 /* Custom scrollbars for a cleaner UI */
@@ -27,4 +53,20 @@ html, body, #root {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%);
+  }
+  50% {
+    transform: translateX(150%);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite linear;
 }

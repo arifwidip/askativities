@@ -73,10 +73,10 @@ export const Riwayat: React.FC = () => {
             return (
               <motion.div
                 key={log.id}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: Math.min(idx * 0.03, 0.5) }} // limit initial delays for long lists
-                className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3"
+                transition={{ type: 'spring', stiffness: 300, damping: 24, delay: Math.min(idx * 0.03, 0.3) }}
+                className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 hover:border-slate-200 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   {/* Status Indicator Icon */}

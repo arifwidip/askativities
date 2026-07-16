@@ -7,7 +7,7 @@ const ACTIVITY_ICONS = ['🛌', '📚', '🧹', '🪥', '🍽️', '🎒', '🥦
 const REWARD_ICONS = ['🎮', '🍦', '🎡', '🧸', '🍫', '🍕', '🍿', '🚲', '💵', '🎁'];
 
 export const Admin: React.FC = () => {
-  const { isAdmin, loginAdmin, logoutAdmin, children, fetchChildren } = useApp();
+  const { isAdmin, loginAdmin, logoutAdmin, children, fetchChildren, showConfirm } = useApp();
   
   // Login States
   const [email, setEmail] = useState('');
@@ -131,16 +131,34 @@ export const Admin: React.FC = () => {
 
   // Handle Delete Child
   const handleDeleteChild = async (id: string, name: string) => {
-    const confirmDel = window.confirm(`Apakah Anda yakin ingin menghapus "${name}"? Seluruh data riwayat juga akan dihapus.`);
+    const confirmDel = await showConfirm({
+      title: 'Hapus Profil Anak',
+      message: `Apakah Anda yakin ingin menghapus "${name}"? Seluruh data tabungan bintang dan riwayat anak juga akan terhapus permanen.`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'danger',
+    });
     if (!confirmDel) return;
 
     try {
       await api.delete(`/children/${id}`);
       fetchChildren();
-      alert('Anak berhasil dihapus.');
+      await showConfirm({
+        title: 'Berhasil',
+        message: 'Profil anak berhasil dihapus.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'success',
+      });
     } catch (err: any) {
       console.error(err);
-      alert('Gagal menghapus anak.');
+      await showConfirm({
+        title: 'Gagal',
+        message: 'Gagal menghapus anak. Silakan coba lagi.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'danger',
+      });
     }
   };
 
@@ -173,13 +191,26 @@ export const Admin: React.FC = () => {
 
   // Handle Delete Activity (Soft Delete)
   const handleDeleteActivity = async (id: string, name: string) => {
-    if (!window.confirm(`Hapus aktivitas "${name}"?`)) return;
+    const confirmDel = await showConfirm({
+      title: 'Hapus Aktivitas',
+      message: `Apakah Anda yakin ingin menghapus aktivitas "${name}" dari daftar?`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'warn',
+    });
+    if (!confirmDel) return;
     try {
       await api.delete(`/activities/${id}`);
       fetchActivities();
     } catch (err) {
       console.error(err);
-      alert('Gagal menghapus aktivitas.');
+      await showConfirm({
+        title: 'Gagal',
+        message: 'Gagal menghapus aktivitas. Silakan coba lagi.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'danger',
+      });
     }
   };
 
@@ -226,13 +257,26 @@ export const Admin: React.FC = () => {
 
   // Handle Delete Reward (Soft Delete)
   const handleDeleteReward = async (id: string, name: string) => {
-    if (!window.confirm(`Hapus reward "${name}"?`)) return;
+    const confirmDel = await showConfirm({
+      title: 'Hapus Reward',
+      message: `Apakah Anda yakin ingin menghapus reward "${name}" dari katalog?`,
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      type: 'warn',
+    });
+    if (!confirmDel) return;
     try {
       await api.delete(`/rewards/${id}`);
       fetchRewards();
     } catch (err) {
       console.error(err);
-      alert('Gagal menghapus reward.');
+      await showConfirm({
+        title: 'Gagal',
+        message: 'Gagal menghapus reward. Silakan coba lagi.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'danger',
+      });
     }
   };
 
@@ -285,7 +329,7 @@ export const Admin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/10 active:scale-95 transition-all text-sm mt-2 disabled:opacity-50"
+              className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-primary-500/10 active-press transition-colors text-sm mt-2 disabled:opacity-50"
             >
               {isLoggingIn ? 'Memvalidasi...' : 'Masuk Dashboard'}
             </button>
@@ -307,7 +351,7 @@ export const Admin: React.FC = () => {
         </div>
         <button
           onClick={logoutAdmin}
-          className="flex items-center gap-1 text-xs text-rose-500 font-bold active:scale-95 transition-transform"
+          className="flex items-center gap-1 text-xs text-rose-500 font-bold active-press"
         >
           <LogOut size={14} />
           Keluar
@@ -388,7 +432,7 @@ export const Admin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isChildLoading}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all disabled:opacity-50 mt-1"
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 mt-1"
               >
                 {isChildLoading ? 'Mengunggah...' : 'Simpan Profil Anak'}
               </button>
@@ -474,7 +518,7 @@ export const Admin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isActLoading}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all disabled:opacity-50 mt-1"
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 mt-1"
               >
                 {isActLoading ? 'Menyimpan...' : 'Simpan Aktivitas'}
               </button>
@@ -589,7 +633,7 @@ export const Admin: React.FC = () => {
               <button
                 type="submit"
                 disabled={isRewLoading}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active:scale-95 transition-all disabled:opacity-50 mt-1"
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 mt-1"
               >
                 {isRewLoading ? 'Menyimpan...' : 'Simpan Reward'}
               </button>

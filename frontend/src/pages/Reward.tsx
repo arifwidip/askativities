@@ -13,7 +13,7 @@ interface Reward {
 }
 
 export const Reward: React.FC = () => {
-  const { selectedChild, redeemPoints, isLoading: isAppLoading } = useApp();
+  const { selectedChild, redeemPoints, showConfirm, isLoading: isAppLoading } = useApp();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
@@ -37,13 +37,23 @@ export const Reward: React.FC = () => {
     if (!selectedChild) return;
 
     if (selectedChild.totalPoints < reward.cost) {
-      alert('Poin bintang tidak cukup!');
+      await showConfirm({
+        title: 'Poin Tidak Cukup',
+        message: `Bintang ${selectedChild.name} saat ini (${selectedChild.totalPoints} ⭐️) belum cukup untuk menukarkan "${reward.name}" (${reward.cost} ⭐️).`,
+        confirmText: 'Mengerti',
+        cancelText: '', // Hide cancel button
+        type: 'warn',
+      });
       return;
     }
 
-    const confirmRedeem = window.confirm(
-      `Apakah ${selectedChild.name} ingin menukarkan ${reward.cost} ⭐️ dengan "${reward.name}"?`
-    );
+    const confirmRedeem = await showConfirm({
+      title: 'Tukarkan Reward',
+      message: `Apakah ${selectedChild.name} ingin menukarkan ${reward.cost} ⭐️ dengan "${reward.name}"?`,
+      confirmText: 'Ya, Tukar!',
+      cancelText: 'Batal',
+      type: 'success',
+    });
     if (!confirmRedeem) return;
 
     setLoadingMap((prev) => ({ ...prev, [reward.id]: true }));
@@ -58,9 +68,21 @@ export const Reward: React.FC = () => {
         origin: { y: 0.6 },
         colors: ['#fbbf24', '#f59e0b', '#fb7185', '#60a5fa', '#a78bfa'],
       });
-      alert(`Selamat! "${reward.name}" berhasil ditukarkan.`);
+      await showConfirm({
+        title: 'Berhasil!',
+        message: `Selamat! "${reward.name}" berhasil ditukarkan. Silakan ambil hadiahmu!`,
+        confirmText: 'Yay!',
+        cancelText: '', // Hide cancel button
+        type: 'success',
+      });
     } else {
-      alert(result.message || 'Gagal menukarkan reward.');
+      await showConfirm({
+        title: 'Gagal',
+        message: result.message || 'Gagal menukarkan reward. Silakan coba lagi.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'danger',
+      });
     }
   };
 
@@ -112,8 +134,8 @@ export const Reward: React.FC = () => {
                 key={reward.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between gap-4 relative overflow-hidden"
+                transition={{ type: 'spring', stiffness: 280, damping: 22, delay: Math.min(idx * 0.04, 0.4) }}
+                className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between gap-4 relative overflow-hidden hover:shadow-md transition-shadow duration-200"
               >
                 {/* Points cost tag */}
                 <div className="absolute top-3 right-3 bg-amber-50 text-amber-700 font-extrabold text-[10px] px-2 py-0.5 rounded-full border border-amber-100">
@@ -143,7 +165,7 @@ export const Reward: React.FC = () => {
                 <button
                   disabled={!canAfford || isItemLoading}
                   onClick={() => handleRedeem(reward)}
-                  className={`w-full py-2.5 rounded-2xl font-bold text-xs shadow-sm transition-all duration-150 active:scale-95 ${
+                  className={`w-full py-2.5 rounded-2xl font-bold text-xs shadow-sm transition-colors active-press ${
                     canAfford
                       ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/10'
                       : 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200/50 shadow-none'

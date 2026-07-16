@@ -97,67 +97,87 @@ export const Beranda: React.FC = () => {
 
       {/* Hero Points Circle */}
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: 'spring', stiffness: 100 }}
-        className="bg-gradient-to-br from-primary-500 to-indigo-600 rounded-3xl p-6 text-white text-center shadow-xl shadow-primary-500/20 flex flex-col items-center justify-center py-8 relative overflow-hidden"
+        whileHover={{ y: -3, scale: 1.01 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        className="bg-gradient-to-br from-primary-500 via-indigo-500 to-violet-600 rounded-3xl p-6 text-white text-center shadow-xl shadow-primary-500/25 flex flex-col items-center justify-center py-9 relative overflow-hidden"
       >
         {/* Background blobs for premium styling */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-xl -mr-10 -mt-10" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-lg -ml-8 -mb-8" />
+        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10" />
+        <div className="absolute bottom-0 left-0 w-28 h-28 bg-white/10 rounded-full blur-xl -ml-8 -mb-8" />
 
-        <span className="text-xs uppercase font-bold tracking-widest text-primary-100 mb-1 z-10">Total Tabungan Poin</span>
+        <span className="text-[10px] uppercase font-bold tracking-widest text-primary-100/90 mb-1.5 z-10">Total Tabungan Poin</span>
         
-        <div className="text-7xl font-black my-2 flex items-center justify-center gap-2 drop-shadow-md z-10">
-          <span>{selectedChild.totalPoints}</span>
-          <span className="text-3xl text-yellow-300 animate-pulse">⭐️</span>
+        <div className="text-7xl font-black my-1 flex items-center justify-center gap-2 drop-shadow-lg z-10">
+          <motion.span
+            key={selectedChild.totalPoints}
+            initial={{ scale: 0.8, opacity: 0.5 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+            className="inline-block"
+          >
+            {selectedChild.totalPoints}
+          </motion.span>
+          <motion.span 
+            animate={{ rotate: [0, 15, -15, 0] }}
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            className="text-3xl text-yellow-300 drop-shadow-[0_2px_10px_rgba(251,191,36,0.5)] select-none"
+          >
+            ⭐️
+          </motion.span>
         </div>
         
-        <p className="text-xs text-primary-50/80 max-w-[200px] mt-2 leading-relaxed z-10">
+        <p className="text-xs text-primary-50/70 max-w-[220px] mt-2.5 leading-relaxed z-10">
           Kumpulkan lebih banyak bintang dengan menyelesaikan tugas harianmu!
         </p>
       </motion.div>
 
       {/* Next Reward Progress */}
       {nextReward && (
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col gap-4">
+        <div className="bg-white rounded-3xl p-5 border border-slate-100/80 shadow-sm flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Target Reward Berikutnya</span>
-              <h3 className="font-bold text-slate-800 mt-1 flex items-center gap-2">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Reward Berikutnya</span>
+              <h3 className="font-extrabold text-slate-800 mt-1 flex items-center gap-2.5 text-sm">
                 {nextReward.icon && nextReward.icon.startsWith('http') ? (
                   <img src={nextReward.icon} alt={nextReward.name} className="w-6 h-6 object-cover rounded-md" />
                 ) : (
-                  <Gift size={16} className="text-amber-500" />
+                  <span className="bg-amber-50 text-amber-600 p-1.5 rounded-lg">
+                    <Gift size={14} />
+                  </span>
                 )}
                 {nextReward.name}
               </h3>
             </div>
             <div className="text-right">
-              <span className="text-xs font-semibold text-slate-400">Butuh</span>
-              <div className="font-extrabold text-sm text-primary-600">{nextReward.cost} ⭐️</div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Butuh</span>
+              <div className="font-extrabold text-base text-primary-600 mt-0.5">{nextReward.cost} ⭐️</div>
             </div>
           </div>
 
           {/* Progress Bar */}
           <div>
-            <div className="flex justify-between text-xs text-slate-500 mb-1.5 font-medium">
-              <span>Progress</span>
+            <div className="flex justify-between text-xs text-slate-500 mb-2 font-semibold">
+              <span>Progres Target</span>
               <span>{selectedChild.totalPoints} / {nextReward.cost} ({progressPercent}%)</span>
             </div>
-            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200/50">
+            <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden border border-slate-200/40 p-[2px] relative">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full"
-              />
+                transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
+                className="h-full bg-gradient-to-r from-yellow-400 via-amber-400 to-amber-500 rounded-full relative overflow-hidden shadow-[inset_0_1px_2px_rgba(0,0,0,0.05)]"
+              >
+                {/* Shimmer animation */}
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] w-[200%] h-full animate-shimmer" style={{ transform: 'translateX(-50%)' }} />
+              </motion.div>
             </div>
           </div>
           
           <button
             onClick={() => navigate('/reward')}
-            className="flex items-center justify-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 mt-1"
+            className="flex items-center justify-center gap-1 text-xs font-bold text-primary-600 hover:text-primary-700 mt-1 active-press"
           >
             Lihat Semua Reward
             <ArrowRight size={12} />
@@ -166,9 +186,9 @@ export const Beranda: React.FC = () => {
       )}
 
       {/* Motivation Banner */}
-      <div className="bg-emerald-50 border border-emerald-100 rounded-3xl p-4 flex items-center gap-4">
-        <div className="bg-emerald-500 text-white p-2.5 rounded-2xl">
-          <Heart size={20} fill="currentColor" />
+      <div className="bg-emerald-50/60 border border-emerald-100/50 rounded-3xl p-4 flex items-center gap-4">
+        <div className="bg-emerald-500 text-white p-2.5 rounded-2xl shadow-md shadow-emerald-500/10">
+          <Heart size={18} fill="currentColor" />
         </div>
         <p className="text-xs text-emerald-800 leading-relaxed">
           <strong>Ingat ya!</strong> Poin bintang diberikan jika kamu melakukan kebaikan dengan ikhlas dan ceria. Semangat!

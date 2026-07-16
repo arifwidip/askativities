@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ChevronDown, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const ChildPicker: React.FC = () => {
   const { children, selectedChild, setSelectedChildId, isAdmin } = useApp();
@@ -12,7 +13,7 @@ export const ChildPicker: React.FC = () => {
     return (
       <button
         onClick={() => navigate('/admin')}
-        className="flex items-center gap-1 text-xs bg-primary-100 text-primary-700 px-3 py-1.5 rounded-full font-medium active:scale-95 transition-transform"
+        className="flex items-center gap-1 text-xs bg-primary-100 text-primary-700 px-3 py-1.5 rounded-full font-semibold active-press transition-colors"
       >
         <Plus size={14} />
         Tambah Anak
@@ -24,63 +25,80 @@ export const ChildPicker: React.FC = () => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 rounded-full py-1 pl-1 pr-3 shadow-sm active:scale-95 transition-all"
+        className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 rounded-full py-1 pl-1 pr-3 shadow-sm active-press"
       >
         <img
           src={selectedChild?.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=default'}
           alt={selectedChild?.name || 'Anak'}
           className="w-7 h-7 rounded-full object-cover border border-slate-100 bg-slate-50"
         />
-        <span className="font-semibold text-sm text-slate-700">{selectedChild?.name || 'Pilih Anak'}</span>
-        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="font-bold text-sm text-slate-700">{selectedChild?.name || 'Pilih Anak'}</span>
+        <ChevronDown size={14} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
-        <>
-          {/* Overlay to close */}
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-20 py-2 animate-in fade-in slide-in-from-top-2 duration-150">
-            <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Ganti Anak
-            </div>
-            {children.map((child) => (
-              <button
-                key={child.id}
-                onClick={() => {
-                  setSelectedChildId(child.id);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 transition-colors ${
-                  selectedChild?.id === child.id ? 'bg-primary-50 text-primary-600 font-semibold' : 'text-slate-600'
-                }`}
-              >
-                <img
-                  src={child.avatarUrl}
-                  alt={child.name}
-                  className="w-6 h-6 rounded-full border border-slate-100 bg-slate-50"
-                />
-                <span className="text-sm truncate">{child.name}</span>
-              </button>
-            ))}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Overlay to close */}
+            <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
             
-            {isAdmin && (
-              <div className="border-t border-slate-100 mt-2 pt-2 px-2">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: -4 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                y: 0,
+                transition: { type: 'spring', stiffness: 450, damping: 28 }
+              }}
+              exit={{ 
+                opacity: 0, 
+                scale: 0.92, 
+                y: -4,
+                transition: { duration: 0.12, ease: 'easeOut' }
+              }}
+              className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl z-20 py-2 origin-top-right overflow-hidden"
+            >
+              <div className="px-3.5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Ganti Anak
+              </div>
+              {children.map((child) => (
                 <button
+                  key={child.id}
                   onClick={() => {
-                    navigate('/admin');
+                    setSelectedChildId(child.id);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs text-center font-medium bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl transition-colors"
+                  className={`w-full flex items-center gap-3 px-3.5 py-2 text-left hover:bg-slate-50 transition-colors ${
+                    selectedChild?.id === child.id ? 'bg-primary-50 text-primary-600 font-bold' : 'text-slate-600'
+                  }`}
                 >
-                  <Plus size={12} />
-                  Kelola Anak
+                  <img
+                    src={child.avatarUrl}
+                    alt={child.name}
+                    className="w-6 h-6 rounded-full border border-slate-100 bg-slate-50"
+                  />
+                  <span className="text-sm truncate">{child.name}</span>
                 </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+              ))}
+              
+              {isAdmin && (
+                <div className="border-t border-slate-100 mt-2 pt-2 px-2">
+                  <button
+                    onClick={() => {
+                      navigate('/admin');
+                      setIsOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs text-center font-semibold bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl transition-colors active-press"
+                  >
+                    <Plus size={12} />
+                    Kelola Anak
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

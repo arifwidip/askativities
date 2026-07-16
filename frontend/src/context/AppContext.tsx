@@ -29,6 +29,14 @@ export interface PointLog {
   createdAt: string;
 }
 
+export interface ConfirmOptions {
+  title: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  type?: 'info' | 'warn' | 'danger' | 'success';
+}
+
 interface AppContextType {
   children: Child[];
   selectedChild: Child | null;
@@ -43,6 +51,13 @@ interface AppContextType {
   isAdmin: boolean;
   loginAdmin: (token: string) => void;
   logoutAdmin: () => void;
+  confirmState: {
+    options: ConfirmOptions;
+    resolve: (value: boolean) => void;
+  } | null;
+  showConfirm: (options: ConfirmOptions) => Promise<boolean>;
+  handleConfirm: () => void;
+  handleCancel: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,6 +68,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  
+  // Custom Confirmation Modal state
+  const [confirmState, setConfirmState] = useState<{
+    options: ConfirmOptions;
+    resolve: (value: boolean) => void;
+  } | null>(null);
+
+  const showConfirm = (options: ConfirmOptions): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      setConfirmState({
+        options,
+        resolve,
+      });
+    });
+  };
+
+  const handleConfirm = () => {
+    if (confirmState) {
+      confirmState.resolve(true);
+      setConfirmState(null);
+    }
+  };
+
+  const handleCancel = () => {
+    if (confirmState) {
+      confirmState.resolve(false);
+      setConfirmState(null);
+    }
+  };
 
   // Load auth token and selected child from localStorage on mount
   useEffect(() => {
@@ -168,6 +212,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAdmin: !!adminToken,
         loginAdmin,
         logoutAdmin,
+        confirmState,
+        showConfirm,
+        handleConfirm,
+        handleCancel,
       }}
     >
       {children}

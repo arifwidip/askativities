@@ -3,6 +3,8 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { ChildPicker } from './ChildPicker';
 import { Home, CheckSquare, Gift, History, Shield } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { ConfirmationModal } from './ConfirmationModal';
+import { motion } from 'framer-motion';
 
 export const Layout: React.FC = () => {
   const { selectedChild } = useApp();
@@ -36,8 +38,16 @@ export const Layout: React.FC = () => {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-slate-50/50">
-          <Outlet />
+        <main className="flex-1 overflow-y-auto bg-slate-50/50 relative">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 26 }}
+            className="min-h-full"
+          >
+            <Outlet />
+          </motion.div>
         </main>
 
         {/* Bottom Navigation */}
@@ -72,6 +82,9 @@ export const Layout: React.FC = () => {
             );
           })}
         </nav>
+        
+        {/* Global Confirmation Modal */}
+        <ConfirmationModal />
       </div>
     </div>
   );

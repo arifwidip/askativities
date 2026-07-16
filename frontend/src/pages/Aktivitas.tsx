@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, api } from '../context/AppContext';
-import { Check, CheckCircle2, Award, Info, ListTodo } from 'lucide-react';
+import { Check, CheckCircle2, Award, Info, ListTodo, Search } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -16,8 +16,14 @@ interface Activity {
 export const Aktivitas: React.FC = () => {
   const { selectedChild, earnPoints, isLoading: isAppLoading } = useApp();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+
+  const filteredActivities = activities.filter((activity) =>
+    activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (activity.description && activity.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const fetchActivities = async () => {
     try {
@@ -77,21 +83,38 @@ export const Aktivitas: React.FC = () => {
   }
 
   return (
-    <div className="p-5 pb-28 flex flex-col gap-5">
-      <div>
+    <div className="p-5 pb-28 flex flex-col gap-4">
+      <div className="shrink-0">
         <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">Daftar Aktivitas Baik</h2>
         <p className="text-xs text-slate-500 mt-1">
           Pilih aktivitas yang diselesaikan **{selectedChild.name}** untuk memberikan poin bintang!
         </p>
       </div>
 
+      {activities.length > 0 && (
+        <div className="relative shrink-0">
+          <input
+            type="text"
+            placeholder="Cari aktivitas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-white border border-slate-200 rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-all placeholder:text-slate-400"
+          />
+          <Search className="absolute left-3.5 top-3.5 text-slate-400" size={16} />
+        </div>
+      )}
+
       {activities.length === 0 ? (
         <div className="bg-white border border-dashed border-slate-200 rounded-3xl p-8 text-center text-slate-400">
           Belum ada aktivitas. Silakan buat aktivitas baru di tab Admin.
         </div>
+      ) : filteredActivities.length === 0 ? (
+        <div className="bg-white border border-dashed border-slate-200 rounded-3xl p-8 text-center text-slate-400">
+          Tidak ada aktivitas yang cocok dengan pencarian "{searchQuery}".
+        </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {activities.map((activity, idx) => {
+        <div className="flex flex-col gap-3 overflow-y-auto">
+          {filteredActivities.map((activity, idx) => {
             const isItemLoading = loadingMap[activity.id] || false;
             return (
               <motion.div

@@ -18,9 +18,9 @@ export const Layout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-slate-100 flex items-center justify-center">
       {/* Centered Mobile Shell for Premium Desktop View */}
-      <div className="w-full max-w-md h-screen bg-slate-50 shadow-2xl flex flex-col relative overflow-hidden">
+      <div className="w-full max-w-md h-[100dvh] bg-slate-50 shadow-2xl flex flex-col relative overflow-hidden">
         
         {/* Top Header */}
         <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between z-10 shadow-sm shrink-0">

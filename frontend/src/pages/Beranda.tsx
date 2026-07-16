@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, api } from '../context/AppContext';
 import { motion } from 'framer-motion';
-import { Award, Compass, Heart, ArrowRight } from 'lucide-react';
+import { Award, Compass, Heart, ArrowRight, Gift } from 'lucide-react';
+
 import { useNavigate } from 'react-router-dom';
 
 interface Reward {
@@ -123,8 +124,12 @@ export const Beranda: React.FC = () => {
           <div className="flex justify-between items-start">
             <div>
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Target Reward Berikutnya</span>
-              <h3 className="font-bold text-slate-800 mt-1 flex items-center gap-1.5">
-                <span className="text-lg">{nextReward.icon || '🎁'}</span>
+              <h3 className="font-bold text-slate-800 mt-1 flex items-center gap-2">
+                {nextReward.icon && nextReward.icon.startsWith('http') ? (
+                  <img src={nextReward.icon} alt={nextReward.name} className="w-6 h-6 object-cover rounded-md" />
+                ) : (
+                  <Gift size={16} className="text-amber-500" />
+                )}
                 {nextReward.name}
               </h3>
             </div>

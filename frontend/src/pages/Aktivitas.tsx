@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, api } from '../context/AppContext';
-import { Check, CheckCircle2, Award, Info } from 'lucide-react';
+import { Check, CheckCircle2, Award, Info, ListTodo } from 'lucide-react';
+
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -102,11 +103,8 @@ export const Aktivitas: React.FC = () => {
               >
                 {/* Icon & Details */}
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                  <div className="bg-primary-50 text-primary-600 p-3 rounded-2xl font-bold text-2xl flex items-center justify-center shrink-0">
-                    {/* Render a default icon/emoji if Lucide name doesn't match directly, or simple emojis */}
-                    <span className="text-2xl" role="img" aria-label="activity-icon">
-                      {activity.icon.length <= 2 ? activity.icon : '✨'}
-                    </span>
+                  <div className="bg-primary-50 text-primary-600 p-3 rounded-2xl flex items-center justify-center shrink-0">
+                    <ListTodo size={22} />
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold text-sm text-slate-800 truncate leading-snug">{activity.name}</h3>

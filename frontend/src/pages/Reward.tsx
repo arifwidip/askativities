@@ -122,10 +122,14 @@ export const Reward: React.FC = () => {
 
                 {/* Reward detail */}
                 <div className="flex flex-col gap-2.5 mt-2">
-                  <div className="bg-amber-50 text-amber-600 w-12 h-12 rounded-2xl text-2xl flex items-center justify-center font-bold">
-                    <span role="img" aria-label="reward-icon">
-                      {reward.icon.length <= 2 ? reward.icon : '🎁'}
-                    </span>
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold overflow-hidden shrink-0">
+                    {reward.icon && reward.icon.startsWith('http') ? (
+                      <img src={reward.icon} alt={reward.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="bg-amber-50 text-amber-600 w-full h-full flex items-center justify-center rounded-2xl">
+                        <Gift size={20} />
+                      </span>
+                    )}
                   </div>
                   <div>
                     <h3 className="font-extrabold text-sm text-slate-800 leading-snug line-clamp-2">{reward.name}</h3>

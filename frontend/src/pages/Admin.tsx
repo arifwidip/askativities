@@ -28,7 +28,6 @@ export const Admin: React.FC = () => {
   const [activities, setActivities] = useState<any[]>([]);
   const [actName, setActName] = useState('');
   const [actDesc, setActDesc] = useState('');
-  const [actIcon, setActIcon] = useState('✨');
   const [actPoints, setActPoints] = useState(10);
   const [isActLoading, setIsActLoading] = useState(false);
 
@@ -36,8 +35,9 @@ export const Admin: React.FC = () => {
   const [rewards, setRewards] = useState<any[]>([]);
   const [rewName, setRewName] = useState('');
   const [rewDesc, setRewDesc] = useState('');
-  const [rewIcon, setRewIcon] = useState('🎁');
   const [rewCost, setRewCost] = useState(50);
+  const [rewImage, setRewImage] = useState<File | null>(null);
+  const [rewImagePreview, setRewImagePreview] = useState<string | null>(null);
   const [isRewLoading, setIsRewLoading] = useState(false);
 
   // Load lists when admin status is true
@@ -154,13 +154,12 @@ export const Admin: React.FC = () => {
       await api.post('/activities', {
         name: actName,
         description: actDesc,
-        icon: actIcon,
+        icon: '✨',
         points: actPoints,
       });
 
       setActName('');
       setActDesc('');
-      setActIcon('✨');
       setActPoints(10);
       fetchActivities();
       alert('Aktivitas berhasil ditambahkan!');
@@ -184,29 +183,42 @@ export const Admin: React.FC = () => {
     }
   };
 
-  // Handle Add Reward
+  // Handle Add Reward (with file upload)
   const handleAddReward = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!rewName || rewCost <= 0) return;
 
     setIsRewLoading(true);
     try {
-      await api.post('/rewards', {
-        name: rewName,
-        description: rewDesc,
-        icon: rewIcon,
-        cost: rewCost,
+      const formData = new FormData();
+      formData.append('name', rewName);
+      formData.append('description', rewDesc);
+      formData.append('cost', String(rewCost));
+      if (rewImage) {
+        formData.append('image', rewImage);
+      }
+
+      await api.post('/rewards', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       setRewName('');
       setRewDesc('');
-      setRewIcon('🎁');
+      setRewImage(null);
+      setRewImagePreview(null);
       setRewCost(50);
+
+      // Reset file input element
+      const fileInput = document.getElementById('reward-image-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
       fetchRewards();
       alert('Reward berhasil ditambahkan!');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Gagal menambahkan reward.');
+      alert(err.response?.data?.error || 'Gagal menambahkan reward.');
     } finally {
       setIsRewLoading(false);
     }
@@ -445,7 +457,7 @@ export const Admin: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nilai Poin (⭐️)</label>
                   <input
@@ -456,19 +468,6 @@ export const Admin: React.FC = () => {
                     onChange={(e) => setActPoints(Number(e.target.value))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary-500 transition-colors"
                   />
-                </div>
-                
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Pilih Ikon Emoji</label>
-                  <select
-                    value={actIcon}
-                    onChange={(e) => setActIcon(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-500 transition-colors"
-                  >
-                    {ACTIVITY_ICONS.map((icon) => (
-                      <option key={icon} value={icon}>{icon}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
 
@@ -492,7 +491,9 @@ export const Admin: React.FC = () => {
                 {activities.map((act) => (
                   <div key={act.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl border border-slate-100/50">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl bg-slate-50 p-2 rounded-xl border border-slate-100">{act.icon}</span>
+                      <span className="text-primary-600 bg-primary-50 p-2.5 rounded-xl">
+                        <ListTodo size={16} />
+                      </span>
                       <div>
                         <h4 className="font-bold text-xs text-slate-700">{act.name}</h4>
                         <span className="text-[10px] text-emerald-600 font-semibold">+{act.points} ⭐️</span>
@@ -544,7 +545,7 @@ export const Admin: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Harga Reward (⭐️)</label>
                   <input
@@ -558,18 +559,32 @@ export const Admin: React.FC = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Pilih Ikon Emoji</label>
-                  <select
-                    value={rewIcon}
-                    onChange={(e) => setRewIcon(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary-500 transition-colors"
-                  >
-                    {REWARD_ICONS.map((icon) => (
-                      <option key={icon} value={icon}>{icon}</option>
-                    ))}
-                  </select>
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Gambar / Foto Hadiah</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const file = e.target.files[0];
+                        setRewImage(file);
+                        setRewImagePreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    id="reward-image-input"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-primary-500 transition-colors"
+                  />
                 </div>
               </div>
+
+              {rewImagePreview && (
+                <div className="mt-2 flex justify-center">
+                  <img
+                    src={rewImagePreview}
+                    alt="Preview"
+                    className="h-20 w-20 object-cover rounded-2xl border border-slate-200 shadow-sm"
+                  />
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -591,7 +606,17 @@ export const Admin: React.FC = () => {
                 {rewards.map((rew) => (
                   <div key={rew.id} className="flex items-center justify-between p-2 hover:bg-slate-50 rounded-xl border border-slate-100/50">
                     <div className="flex items-center gap-3">
-                      <span className="text-xl bg-slate-50 p-2 rounded-xl border border-slate-100">{rew.icon}</span>
+                      {rew.icon && rew.icon.startsWith('http') ? (
+                        <img
+                          src={rew.icon}
+                          alt={rew.name}
+                          className="w-10 h-10 object-cover rounded-xl border border-slate-100"
+                        />
+                      ) : (
+                        <span className="text-amber-600 bg-amber-50 p-2.5 rounded-xl">
+                          <Gift size={16} />
+                        </span>
+                      )}
                       <div>
                         <h4 className="font-bold text-xs text-slate-700">{rew.name}</h4>
                         <span className="text-[10px] text-amber-600 font-semibold">{rew.cost} ⭐️</span>

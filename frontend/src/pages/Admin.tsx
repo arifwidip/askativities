@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp, api, Child } from '../context/AppContext';
-import { Lock, LogOut, Plus, Trash2, ShieldCheck, ListTodo, Gift, Users } from 'lucide-react';
+import { Lock, LogOut, Plus, Trash2, ShieldCheck, ListTodo, Gift, Users, Pencil, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ACTIVITY_ICONS = ['🛌', '📚', '🧹', '🪥', '🍽️', '🎒', '🥦', '🤝', '🎨', '🚶', '✨'];
@@ -30,6 +30,7 @@ export const Admin: React.FC = () => {
   const [actDesc, setActDesc] = useState('');
   const [actPoints, setActPoints] = useState(10);
   const [isActLoading, setIsActLoading] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<any | null>(null);
 
   // Reward Management States
   const [rewards, setRewards] = useState<any[]>([]);
@@ -39,6 +40,7 @@ export const Admin: React.FC = () => {
   const [rewImage, setRewImage] = useState<File | null>(null);
   const [rewImagePreview, setRewImagePreview] = useState<string | null>(null);
   const [isRewLoading, setIsRewLoading] = useState(false);
+  const [editingReward, setEditingReward] = useState<any | null>(null);
 
   // Load lists when admin status is true
   useEffect(() => {
@@ -214,6 +216,50 @@ export const Admin: React.FC = () => {
     }
   };
 
+  // Handle Edit Activity
+  const handleEditActivity = (act: any) => {
+    setEditingActivity(act);
+    setActName(act.name);
+    setActDesc(act.description || '');
+    setActPoints(act.points);
+  };
+
+  const handleCancelEditActivity = () => {
+    setEditingActivity(null);
+    setActName('');
+    setActDesc('');
+    setActPoints(10);
+  };
+
+  // Handle Update Activity
+  const handleUpdateActivity = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingActivity) return;
+    if (!actName || actPoints <= 0) return;
+
+    setIsActLoading(true);
+    try {
+      await api.patch(`/activities/${editingActivity.id}`, {
+        name: actName,
+        description: actDesc,
+        icon: '✨',
+        points: actPoints,
+      });
+
+      setEditingActivity(null);
+      setActName('');
+      setActDesc('');
+      setActPoints(10);
+      fetchActivities();
+      alert('Aktivitas berhasil diperbarui!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui aktivitas.');
+    } finally {
+      setIsActLoading(false);
+    }
+  };
+
   // Handle Add Reward (with file upload)
   const handleAddReward = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -277,6 +323,70 @@ export const Admin: React.FC = () => {
         cancelText: '',
         type: 'danger',
       });
+    }
+  };
+
+  // Handle Edit Reward
+  const handleEditReward = (rew: any) => {
+    setEditingReward(rew);
+    setRewName(rew.name);
+    setRewDesc(rew.description || '');
+    setRewCost(rew.cost);
+    setRewImage(null);
+    setRewImagePreview(null);
+    const fileInput = document.getElementById('reward-image-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReward(null);
+    setRewName('');
+    setRewDesc('');
+    setRewCost(50);
+    setRewImage(null);
+    setRewImagePreview(null);
+    const fileInput = document.getElementById('reward-image-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  // Handle Update Reward
+  const handleUpdateReward = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingReward) return;
+    if (!rewName || rewCost <= 0) return;
+
+    setIsRewLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('name', rewName);
+      formData.append('description', rewDesc);
+      formData.append('cost', String(rewCost));
+      if (rewImage) {
+        formData.append('image', rewImage);
+      }
+
+      await api.patch(`/rewards/${editingReward.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setEditingReward(null);
+      setRewName('');
+      setRewDesc('');
+      setRewCost(50);
+      setRewImage(null);
+      setRewImagePreview(null);
+      const fileInput = document.getElementById('reward-image-input') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+
+      fetchRewards();
+      alert('Reward berhasil diperbarui!');
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.error || 'Gagal memperbarui reward.');
+    } finally {
+      setIsRewLoading(false);
     }
   };
 
@@ -472,13 +582,13 @@ export const Admin: React.FC = () => {
       {/* SUB TAB: ACTIVITIES MANAGEMENT */}
       {activeSubTab === 'activities' && (
         <div className="flex flex-col gap-5">
-          {/* Add Activity Form */}
+          {/* Add / Edit Activity Form */}
           <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
             <h3 className="font-extrabold text-sm text-slate-800 mb-4 flex items-center gap-1">
-              <Plus size={16} />
-              Buat Aktivitas Baru
+              {editingActivity ? <Pencil size={16} /> : <Plus size={16} />}
+              {editingActivity ? 'Edit Aktivitas' : 'Buat Aktivitas Baru'}
             </h3>
-            <form onSubmit={handleAddActivity} className="flex flex-col gap-4">
+            <form onSubmit={editingActivity ? handleUpdateActivity : handleAddActivity} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nama Aktivitas</label>
                 <input
@@ -515,13 +625,29 @@ export const Admin: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                type="submit"
-                disabled={isActLoading}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 mt-1"
-              >
-                {isActLoading ? 'Menyimpan...' : 'Simpan Aktivitas'}
-              </button>
+              <div className="flex gap-2 mt-1">
+                {editingActivity && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditActivity}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs active-press transition-colors"
+                  >
+                    <X size={14} className="inline mr-1" />
+                    Batal
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isActLoading}
+                  className={`font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 ${
+                    editingActivity
+                      ? 'flex-1 bg-amber-500 hover:bg-amber-600 text-white'
+                      : 'w-full bg-primary-600 hover:bg-primary-700 text-white'
+                  }`}
+                >
+                  {isActLoading ? 'Menyimpan...' : editingActivity ? 'Perbarui Aktivitas' : 'Simpan Aktivitas'}
+                </button>
+              </div>
             </form>
           </div>
 
@@ -543,12 +669,20 @@ export const Admin: React.FC = () => {
                         <span className="text-[10px] text-emerald-600 font-semibold">+{act.points} ⭐️</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteActivity(act.id, act.name)}
-                      className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEditActivity(act)}
+                        className="text-slate-400 hover:text-amber-600 hover:bg-amber-50 p-2 rounded-xl active:scale-90 transition-transform"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteActivity(act.id, act.name)}
+                        className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -560,13 +694,13 @@ export const Admin: React.FC = () => {
       {/* SUB TAB: REWARDS MANAGEMENT */}
       {activeSubTab === 'rewards' && (
         <div className="flex flex-col gap-5">
-          {/* Add Reward Form */}
+          {/* Add / Edit Reward Form */}
           <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
             <h3 className="font-extrabold text-sm text-slate-800 mb-4 flex items-center gap-1">
-              <Plus size={16} />
-              Buat Katalog Reward Baru
+              {editingReward ? <Pencil size={16} /> : <Plus size={16} />}
+              {editingReward ? 'Edit Reward' : 'Buat Katalog Reward Baru'}
             </h3>
-            <form onSubmit={handleAddReward} className="flex flex-col gap-4">
+            <form onSubmit={editingReward ? handleUpdateReward : handleAddReward} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Nama Hadiah / Reward</label>
                 <input
@@ -620,23 +754,39 @@ export const Admin: React.FC = () => {
                 </div>
               </div>
 
-              {rewImagePreview && (
+              {(rewImagePreview || (editingReward && editingReward.icon?.startsWith('http'))) && (
                 <div className="mt-2 flex justify-center">
                   <img
-                    src={rewImagePreview}
+                    src={rewImagePreview || editingReward.icon}
                     alt="Preview"
                     className="h-20 w-20 object-cover rounded-2xl border border-slate-200 shadow-sm"
                   />
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={isRewLoading}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 mt-1"
-              >
-                {isRewLoading ? 'Menyimpan...' : 'Simpan Reward'}
-              </button>
+              <div className="flex gap-2 mt-1">
+                {editingReward && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-xl text-xs active-press transition-colors"
+                  >
+                    <X size={14} className="inline mr-1" />
+                    Batal
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={isRewLoading}
+                  className={`font-bold py-2.5 rounded-xl text-xs active-press transition-colors disabled:opacity-50 ${
+                    editingReward
+                      ? 'flex-1 bg-amber-500 hover:bg-amber-600 text-white'
+                      : 'w-full bg-primary-600 hover:bg-primary-700 text-white'
+                  }`}
+                >
+                  {isRewLoading ? 'Menyimpan...' : editingReward ? 'Perbarui Reward' : 'Simpan Reward'}
+                </button>
+              </div>
             </form>
           </div>
 
@@ -666,12 +816,20 @@ export const Admin: React.FC = () => {
                         <span className="text-[10px] text-amber-600 font-semibold">{rew.cost} ⭐️</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteReward(rew.id, rew.name)}
-                      className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleEditReward(rew)}
+                        className="text-slate-400 hover:text-amber-600 hover:bg-amber-50 p-2 rounded-xl active:scale-90 transition-transform"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReward(rew.id, rew.name)}
+                        className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

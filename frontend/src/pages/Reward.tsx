@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useApp, api, API_URL } from '../context/AppContext';
 import { Info, Gift, ChevronLeft, ChevronRight, LayoutGrid, Sliders } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import confetti from 'canvas-confetti';
@@ -14,7 +14,7 @@ interface Reward {
   cost: number;
 }
 
-const slideVariants = {
+const slideVariants: Variants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 250 : -250,
     opacity: 0,

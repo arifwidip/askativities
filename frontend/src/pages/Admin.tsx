@@ -97,7 +97,7 @@ export const Admin: React.FC = () => {
   const handleAddChild = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!childName || !childAvatar) {
-      alert('Nama dan avatar wajib diisi.');
+      await showConfirm({ title: 'Validasi', message: 'Nama dan avatar wajib diisi.', confirmText: 'OK', cancelText: '', type: 'warn' });
       return;
     }
 
@@ -122,10 +122,10 @@ export const Admin: React.FC = () => {
       if (fileInput) fileInput.value = '';
 
       fetchChildren();
-      alert('Anak berhasil ditambahkan!');
+      await showConfirm({ title: 'Berhasil', message: 'Anak berhasil ditambahkan!', confirmText: 'OK', cancelText: '', type: 'success' });
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.error || 'Gagal menambahkan anak.');
+      await showConfirm({ title: 'Gagal', message: err.response?.data?.error || 'Gagal menambahkan anak.', confirmText: 'OK', cancelText: '', type: 'danger' });
     } finally {
       setIsChildLoading(false);
     }
@@ -182,10 +182,10 @@ export const Admin: React.FC = () => {
       setActDesc('');
       setActPoints(10);
       fetchActivities();
-      alert('Aktivitas berhasil ditambahkan!');
+      await showConfirm({ title: 'Berhasil', message: 'Aktivitas berhasil ditambahkan!', confirmText: 'OK', cancelText: '', type: 'success' });
     } catch (err) {
       console.error(err);
-      alert('Gagal menambahkan aktivitas.');
+      await showConfirm({ title: 'Gagal', message: 'Gagal menambahkan aktivitas.', confirmText: 'OK', cancelText: '', type: 'danger' });
     } finally {
       setIsActLoading(false);
     }
@@ -251,10 +251,10 @@ export const Admin: React.FC = () => {
       setActDesc('');
       setActPoints(10);
       fetchActivities();
-      alert('Aktivitas berhasil diperbarui!');
+      await showConfirm({ title: 'Berhasil', message: 'Aktivitas berhasil diperbarui!', confirmText: 'OK', cancelText: '', type: 'success' });
     } catch (err) {
       console.error(err);
-      alert('Gagal memperbarui aktivitas.');
+      await showConfirm({ title: 'Gagal', message: 'Gagal memperbarui aktivitas.', confirmText: 'OK', cancelText: '', type: 'danger' });
     } finally {
       setIsActLoading(false);
     }
@@ -292,10 +292,10 @@ export const Admin: React.FC = () => {
       if (fileInput) fileInput.value = '';
 
       fetchRewards();
-      alert('Reward berhasil ditambahkan!');
+      await showConfirm({ title: 'Berhasil', message: 'Reward berhasil ditambahkan!', confirmText: 'OK', cancelText: '', type: 'success' });
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.error || 'Gagal menambahkan reward.');
+      await showConfirm({ title: 'Gagal', message: err.response?.data?.error || 'Gagal menambahkan reward.', confirmText: 'OK', cancelText: '', type: 'danger' });
     } finally {
       setIsRewLoading(false);
     }
@@ -381,10 +381,10 @@ export const Admin: React.FC = () => {
       if (fileInput) fileInput.value = '';
 
       fetchRewards();
-      alert('Reward berhasil diperbarui!');
+      await showConfirm({ title: 'Berhasil', message: 'Reward berhasil diperbarui!', confirmText: 'OK', cancelText: '', type: 'success' });
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.error || 'Gagal memperbarui reward.');
+      await showConfirm({ title: 'Gagal', message: err.response?.data?.error || 'Gagal memperbarui reward.', confirmText: 'OK', cancelText: '', type: 'danger' });
     } finally {
       setIsRewLoading(false);
     }

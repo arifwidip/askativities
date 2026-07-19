@@ -228,6 +228,63 @@ router.post('/:id/redeem', async (req, res): Promise<void> => {
   }
 });
 
+// DELETE /api/children/:childId/logs/:logId - Admin Only (Revoke a point log)
+router.delete(
+  '/:childId/logs/:logId',
+  authenticateJWT,
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+      const { childId, logId } = req.params;
+
+      const log = await prisma.pointLog.findFirst({
+        where: { id: logId, childId },
+      });
+
+      if (!log) {
+        res.status(404).json({ error: 'Point log not found for this child.' });
+        return;
+      }
+
+      const child = await prisma.child.findUnique({
+        where: { id: childId },
+      });
+
+      if (!child) {
+        res.status(404).json({ error: 'Child not found.' });
+        return;
+      }
+
+      let newPoints = child.totalPoints;
+      if (log.type === 'EARN') {
+        newPoints = child.totalPoints - log.amount;
+        if (newPoints < 0) {
+          newPoints = 0;
+        }
+      } else if (log.type === 'REDEEM' || log.type === 'DEDUCT') {
+        newPoints = child.totalPoints + log.amount;
+      }
+
+      const [updatedChild] = await prisma.$transaction([
+        prisma.child.update({
+          where: { id: childId },
+          data: { totalPoints: newPoints },
+        }),
+        prisma.pointLog.delete({
+          where: { id: logId },
+        }),
+      ]);
+
+      res.json({
+        message: 'Point transaction revoked successfully.',
+        child: updatedChild,
+      });
+    } catch (error: any) {
+      console.error('Error revoking point transaction:', error);
+      res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
+);
+
 // POST /api/children/:id/deduct - Admin Only (Deduct points for correction/penalty)
 router.post('/:id/deduct', authenticateJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

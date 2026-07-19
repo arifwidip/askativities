@@ -1,12 +1,53 @@
 import React, { useEffect, useState } from 'react';
 import { useApp, api, PointLog } from '../context/AppContext';
-import { Info, PlusCircle, MinusCircle, Calendar } from 'lucide-react';
+import { Info, PlusCircle, MinusCircle, Calendar, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const Riwayat: React.FC = () => {
-  const { selectedChild, isLoading: isAppLoading } = useApp();
+  const { selectedChild, isLoading: isAppLoading, isAdmin, revokePoints, showConfirm } = useApp();
   const [logs, setLogs] = useState<PointLog[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleRevoke = async (log: PointLog) => {
+    const isEarn = log.type === 'EARN';
+    const confirmMessage = isEarn
+      ? `Apakah Anda yakin ingin membatalkan aktivitas "${log.title}"? Poin anak akan dikurangi sebanyak ${log.amount} ⭐️.`
+      : `Apakah Anda yakin ingin membatalkan penukaran "${log.title}"? Poin anak akan dikembalikan sebanyak ${log.amount} ⭐️.`;
+
+    const confirm = await showConfirm({
+      title: 'Batalkan Transaksi',
+      message: confirmMessage,
+      confirmText: 'Ya, Batalkan',
+      cancelText: 'Kembali',
+      type: 'warn',
+    });
+
+    if (!confirm) return;
+
+    try {
+      const res = await revokePoints(log.id);
+      if (res.success) {
+        await showConfirm({
+          title: 'Berhasil',
+          message: 'Transaksi berhasil dibatalkan.',
+          confirmText: 'OK',
+          cancelText: '',
+          type: 'success',
+        });
+        fetchLogs();
+      } else {
+        await showConfirm({
+          title: 'Gagal',
+          message: res.message || 'Gagal membatalkan transaksi.',
+          confirmText: 'OK',
+          cancelText: '',
+          type: 'danger',
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchLogs = async () => {
     if (!selectedChild) return;
@@ -92,10 +133,21 @@ export const Riwayat: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="shrink-0 text-right">
-                  <span className={`font-extrabold text-sm ${isEarn ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {isEarn ? '+' : '-'}{log.amount} ⭐️
-                  </span>
+                <div className="shrink-0 flex items-center gap-3">
+                  <div className="text-right">
+                    <span className={`font-extrabold text-sm ${isEarn ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {isEarn ? '+' : '-'}{log.amount} ⭐️
+                    </span>
+                  </div>
+                  {isAdmin && (
+                    <button
+                      onClick={() => handleRevoke(log)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-all shrink-0"
+                      title={isEarn ? "Batalkan penambahan poin" : "Batalkan penukaran reward"}
+                    >
+                      <RotateCcw size={15} />
+                    </button>
+                  )}
                 </div>
               </motion.div>
             );

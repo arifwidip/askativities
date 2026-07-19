@@ -47,6 +47,7 @@ interface AppContextType {
   fetchChildren: () => Promise<void>;
   earnPoints: (activityId: string) => Promise<boolean>;
   redeemPoints: (rewardId: string) => Promise<{ success: boolean; message?: string }>;
+  revokePoints: (logId: string) => Promise<{ success: boolean; message?: string }>;
   adminToken: string | null;
   isAdmin: boolean;
   loginAdmin: (token: string) => void;
@@ -177,6 +178,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const revokePoints = async (logId: string): Promise<{ success: boolean; message?: string }> => {
+    if (!selectedChildId) return { success: false, message: 'Tidak ada anak yang terpilih.' };
+    try {
+      const response = await api.delete(`/children/${selectedChildId}/logs/${logId}`);
+      // Update local child points
+      setChildrenList((prev) =>
+        prev.map((c) => (c.id === selectedChildId ? { ...c, totalPoints: response.data.child.totalPoints } : c))
+      );
+      return { success: true };
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.error || 'Gagal membatalkan transaksi poin.';
+      return { success: false, message: errMsg };
+    }
+  };
+
   const loginAdmin = (token: string) => {
     setAdminToken(token);
     localStorage.setItem('adminToken', token);
@@ -208,6 +225,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         fetchChildren,
         earnPoints,
         redeemPoints,
+        revokePoints,
         adminToken,
         isAdmin: !!adminToken,
         loginAdmin,

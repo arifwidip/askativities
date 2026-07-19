@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useApp, api, Child } from '../context/AppContext';
-import { Lock, LogOut, Plus, Trash2, ShieldCheck, ListTodo, Gift, Users, Pencil, X } from 'lucide-react';
+import { Lock, LogOut, Plus, Trash2, ShieldCheck, ListTodo, Gift, Users, Pencil, X, MinusCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const ACTIVITY_ICONS = ['🛌', '📚', '🧹', '🪥', '🍽️', '🎒', '🥦', '🤝', '🎨', '🚶', '✨'];
 const REWARD_ICONS = ['🎮', '🍦', '🎡', '🧸', '🍫', '🍕', '🍿', '🚲', '💵', '🎁'];
 
 export const Admin: React.FC = () => {
-  const { isAdmin, loginAdmin, logoutAdmin, children, fetchChildren, showConfirm } = useApp();
+  const { isAdmin, loginAdmin, logoutAdmin, children, fetchChildren, showConfirm, deductPoints } = useApp();
   
   // Login States
   const [email, setEmail] = useState('');
@@ -23,6 +23,12 @@ export const Admin: React.FC = () => {
   const [childAvatar, setChildAvatar] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [isChildLoading, setIsChildLoading] = useState(false);
+
+  // Point Deduction States
+  const [deductingChildId, setDeductingChildId] = useState<string | null>(null);
+  const [deductAmount, setDeductAmount] = useState<number>(5);
+  const [deductReason, setDeductReason] = useState('');
+  const [isDeductLoading, setIsDeductLoading] = useState(false);
 
   // Activity Management States
   const [activities, setActivities] = useState<any[]>([]);
@@ -161,6 +167,49 @@ export const Admin: React.FC = () => {
         cancelText: '',
         type: 'danger',
       });
+    }
+  };
+
+  // Handle Point Deduction
+  const handleDeductPoints = async (e: React.FormEvent, childId: string) => {
+    e.preventDefault();
+    if (deductAmount <= 0 || !deductReason) return;
+
+    setIsDeductLoading(true);
+    try {
+      const res = await deductPoints(childId, deductAmount, deductReason);
+      if (res.success) {
+        setDeductingChildId(null);
+        setDeductReason('');
+        setDeductAmount(5);
+        fetchChildren(); // refresh list to show updated points
+        await showConfirm({
+          title: 'Berhasil',
+          message: `Berhasil mengurangi ${deductAmount} ⭐️ dari tabungan bintang anak.`,
+          confirmText: 'OK',
+          cancelText: '',
+          type: 'success',
+        });
+      } else {
+        await showConfirm({
+          title: 'Gagal',
+          message: res.message || 'Gagal mengurangi poin.',
+          confirmText: 'OK',
+          cancelText: '',
+          type: 'danger',
+        });
+      }
+    } catch (err: any) {
+      console.error(err);
+      await showConfirm({
+        title: 'Gagal',
+        message: 'Gagal mengurangi poin.',
+        confirmText: 'OK',
+        cancelText: '',
+        type: 'danger',
+      });
+    } finally {
+      setIsDeductLoading(false);
     }
   };
 
@@ -557,20 +606,88 @@ export const Admin: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-2">
                 {children.map((child) => (
-                  <div key={child.id} className="flex items-center justify-between p-2.5 hover:bg-slate-50/50 rounded-2xl border border-slate-100/50">
-                    <div className="flex items-center gap-3">
-                      <img src={child.avatarUrl} alt={child.name} className="w-9 h-9 rounded-full object-cover border border-slate-200 bg-slate-50" />
-                      <div>
-                        <h4 className="font-bold text-xs text-slate-700">{child.name}</h4>
-                        <span className="text-[10px] text-slate-400">{child.totalPoints} ⭐️</span>
+                  <div key={child.id} className="flex flex-col p-2.5 hover:bg-slate-50/50 rounded-2xl border border-slate-100/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <img src={child.avatarUrl} alt={child.name} className="w-9 h-9 rounded-full object-cover border border-slate-200 bg-slate-50" />
+                        <div>
+                          <h4 className="font-bold text-xs text-slate-700">{child.name}</h4>
+                          <span className="text-[10px] text-slate-400">{child.totalPoints} ⭐️</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => {
+                            if (deductingChildId === child.id) {
+                              setDeductingChildId(null);
+                            } else {
+                              setDeductingChildId(child.id);
+                              setDeductReason('');
+                              setDeductAmount(5);
+                            }
+                          }}
+                          className={`p-2 rounded-xl active:scale-90 transition-all ${
+                            deductingChildId === child.id ? 'text-rose-600 bg-rose-50' : 'text-rose-500 hover:bg-rose-50'
+                          }`}
+                          title="Kurangi Poin"
+                        >
+                          <MinusCircle size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteChild(child.id, child.name)}
+                          className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
+                          title="Hapus Profil"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
-                    <button
-                      onClick={() => handleDeleteChild(child.id, child.name)}
-                      className="text-rose-500 hover:bg-rose-50 p-2 rounded-xl active:scale-90 transition-transform"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+
+                    {deductingChildId === child.id && (
+                      <form onSubmit={(e) => handleDeductPoints(e, child.id)} className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col gap-2.5">
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Alasan Pengurangan</label>
+                            <input
+                              type="text"
+                              required
+                              value={deductReason}
+                              onChange={(e) => setDeductReason(e.target.value)}
+                              placeholder="Misal: Terlambat tidur"
+                              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500"
+                            />
+                          </div>
+                          <div className="w-20">
+                            <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Jumlah (⭐️)</label>
+                            <input
+                              type="number"
+                              required
+                              min={1}
+                              max={child.totalPoints}
+                              value={deductAmount}
+                              onChange={(e) => setDeductAmount(Number(e.target.value))}
+                              className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-rose-500"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setDeductingChildId(null)}
+                            className="px-2.5 py-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-bold"
+                          >
+                            Batal
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isDeductLoading}
+                            className="px-2.5 py-1 bg-rose-600 text-white rounded-lg text-[10px] font-bold disabled:opacity-50"
+                          >
+                            {isDeductLoading ? 'Mengurangi...' : 'Kurangi'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 ))}
               </div>

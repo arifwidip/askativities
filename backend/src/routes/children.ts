@@ -228,4 +228,63 @@ router.post('/:id/redeem', async (req, res): Promise<void> => {
   }
 });
 
+// POST /api/children/:id/deduct - Admin Only (Deduct points for correction/penalty)
+router.post('/:id/deduct', authenticateJWT, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { amount, title } = req.body;
+
+    if (amount === undefined || Number(amount) <= 0) {
+      res.status(400).json({ error: 'Amount must be greater than 0.' });
+      return;
+    }
+
+    if (!title) {
+      res.status(400).json({ error: 'Reason/title is required.' });
+      return;
+    }
+
+    const child = await prisma.child.findUnique({ where: { id } });
+    if (!child) {
+      res.status(404).json({ error: 'Child not found.' });
+      return;
+    }
+
+    // Check balance
+    if (child.totalPoints < Number(amount)) {
+      res.status(400).json({ error: `Insufficient points. Cannot deduct ${amount} pts, child only has ${child.totalPoints} pts.` });
+      return;
+    }
+
+    // Execute in transaction: 1. deduct points, 2. create log
+    const [updatedChild, log] = await prisma.$transaction([
+      prisma.child.update({
+        where: { id },
+        data: {
+          totalPoints: {
+            decrement: Number(amount),
+          },
+        },
+      }),
+      prisma.pointLog.create({
+        data: {
+          childId: id,
+          type: 'DEDUCT',
+          amount: Number(amount), // absolute value
+          title: title,
+        },
+      }),
+    ]);
+
+    res.json({
+      message: `Points deducted successfully! -${amount} pts`,
+      child: updatedChild,
+      log,
+    });
+  } catch (error: any) {
+    console.error('Error deducting points:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 export default router;

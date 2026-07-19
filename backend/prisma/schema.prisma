@@ -46,6 +46,7 @@ model Reward {
 enum LogType {
   EARN
   REDEEM
+  DEDUCT
 }
 
 model PointLog {

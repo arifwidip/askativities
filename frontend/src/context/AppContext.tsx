@@ -23,7 +23,7 @@ export interface Child {
 export interface PointLog {
   id: string;
   childId: string;
-  type: 'EARN' | 'REDEEM';
+  type: 'EARN' | 'REDEEM' | 'DEDUCT';
   amount: number;
   title: string;
   createdAt: string;
@@ -48,6 +48,7 @@ interface AppContextType {
   earnPoints: (activityId: string) => Promise<boolean>;
   redeemPoints: (rewardId: string) => Promise<{ success: boolean; message?: string }>;
   revokePoints: (logId: string) => Promise<{ success: boolean; message?: string }>;
+  deductPoints: (childId: string, amount: number, title: string) => Promise<{ success: boolean; message?: string }>;
   adminToken: string | null;
   isAdmin: boolean;
   loginAdmin: (token: string) => void;
@@ -194,6 +195,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const deductPoints = async (childId: string, amount: number, title: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const response = await api.post(`/children/${childId}/deduct`, { amount, title });
+      // Update local child points
+      setChildrenList((prev) =>
+        prev.map((c) => (c.id === childId ? { ...c, totalPoints: response.data.child.totalPoints } : c))
+      );
+      return { success: true };
+    } catch (err: any) {
+      console.error(err);
+      const errMsg = err.response?.data?.error || 'Gagal mengurangi poin.';
+      return { success: false, message: errMsg };
+    }
+  };
+
   const loginAdmin = (token: string) => {
     setAdminToken(token);
     localStorage.setItem('adminToken', token);
@@ -226,6 +242,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         earnPoints,
         redeemPoints,
         revokePoints,
+        deductPoints,
         adminToken,
         isAdmin: !!adminToken,
         loginAdmin,

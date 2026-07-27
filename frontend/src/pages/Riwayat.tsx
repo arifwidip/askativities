@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useApp, api, PointLog } from '../context/AppContext';
 import { Info, PlusCircle, MinusCircle, Calendar, RotateCcw, Loader2, CheckCircle2, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 const PAGE_LIMIT = 15;
 
@@ -21,6 +21,7 @@ export const Riwayat: React.FC = () => {
   const [totalLogs, setTotalLogs] = useState<number>(0);
 
   const observerTarget = useRef<HTMLDivElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const handleRevoke = async (log: PointLog) => {
     const isEarn = log.type === 'EARN';
@@ -213,10 +214,10 @@ export const Riwayat: React.FC = () => {
 
       {loadingInitial || isAppLoading ? (
         <div className="flex flex-col gap-4">
-          <div className="h-4 w-32 bg-slate-200/60 rounded animate-pulse" />
+          <div className="h-4 w-32 bg-slate-200/60 rounded animate-pulse motion-reduce:animate-none motion-reduce:opacity-60" />
           <div className="flex flex-col gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 animate-pulse">
+              <div key={i} className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 animate-pulse motion-reduce:animate-none motion-reduce:opacity-60">
                 <div className="flex items-center gap-3 w-full">
                   <div className="w-9 h-9 bg-slate-100 rounded-xl shrink-0" />
                   <div className="flex-1 space-y-2">
@@ -253,9 +254,12 @@ export const Riwayat: React.FC = () => {
                   return (
                     <motion.div
                       key={log.id}
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: prefersReducedMotion ? 0.7 : 0, y: prefersReducedMotion ? 0 : 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 24, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }}
+                      transition={prefersReducedMotion
+                        ? { duration: 0.15, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }
+                        : { type: 'spring', stiffness: 300, damping: 24, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }
+                      }
                       className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 hover:border-slate-200 transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
@@ -301,7 +305,7 @@ export const Riwayat: React.FC = () => {
           {/* Infinite scroll loading indicator */}
           {loadingMore && (
             <div className="flex items-center justify-center gap-2 py-3 text-slate-400 text-xs">
-              <Loader2 size={16} className="animate-spin text-primary-500" />
+              <Loader2 size={16} className="animate-spin motion-reduce:animate-none text-primary-500" />
               <span>Memuat transaksi lainnya...</span>
             </div>
           )}

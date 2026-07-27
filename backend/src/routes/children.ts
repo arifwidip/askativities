@@ -47,6 +47,47 @@ router.get('/:id', async (req, res): Promise<void> => {
   }
 });
 
+// GET /api/children/:id/logs - Public (Paginated logs for child)
+router.get('/:id/logs', async (req, res): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string, 10) || 15));
+    const skip = (page - 1) * limit;
+
+    const child = await prisma.child.findUnique({ where: { id } });
+    if (!child) {
+      res.status(404).json({ error: 'Child not found.' });
+      return;
+    }
+
+    const [logs, total] = await prisma.$transaction([
+      prisma.pointLog.findMany({
+        where: { childId: id },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.pointLog.count({
+        where: { childId: id },
+      }),
+    ]);
+
+    const hasMore = skip + logs.length < total;
+
+    res.json({
+      logs,
+      total,
+      page,
+      limit,
+      hasMore,
+    });
+  } catch (error: any) {
+    console.error('Error fetching child logs:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 // POST /api/children - Admin Only (Create child with avatar upload)
 router.post(
   '/',

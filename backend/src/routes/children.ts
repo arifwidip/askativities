@@ -47,6 +47,47 @@ router.get('/:id', async (req, res): Promise<void> => {
   }
 });
 
+// GET /api/children/:id/logs - Public (Cursor-based paginated logs for child)
+router.get('/:id/logs', async (req, res): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const cursor = req.query.cursor as string | undefined;
+    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string, 10) || 15));
+
+    const child = await prisma.child.findUnique({ where: { id } });
+    if (!child) {
+      res.status(404).json({ error: 'Child not found.' });
+      return;
+    }
+
+    const [logs, total] = await prisma.$transaction([
+      prisma.pointLog.findMany({
+        where: { childId: id },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+      }),
+      prisma.pointLog.count({
+        where: { childId: id },
+      }),
+    ]);
+
+    const hasMore = logs.length > limit;
+    if (hasMore) logs.pop();
+    const nextCursor = hasMore && logs.length > 0 ? logs[logs.length - 1].id : null;
+
+    res.json({
+      logs,
+      total,
+      nextCursor,
+      hasMore,
+    });
+  } catch (error: any) {
+    console.error('Error fetching child logs:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
 // POST /api/children - Admin Only (Create child with avatar upload)
 router.post(
   '/',

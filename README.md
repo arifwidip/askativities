@@ -1,30 +1,31 @@
 # ⭐️ Poin Anak (Mobile-First PWA)
 
-Aplikasi pencatat poin bintang kebiasaan baik anak untuk memotivasi anak secara positif, didesain khusus untuk tampilan mobile-first dan dapat diinstal sebagai PWA (Progressive Web App).
+A point tracking app for children's good habits, designed to motivate children positively. Built with a mobile-first approach and can be installed as a PWA (Progressive Web App).
 
-## 📁 Struktur Proyek (Monorepo)
+## 📁 Project Structure (Monorepo)
 
-* `/backend` — Express.js + TypeScript + Prisma ORM + S3/Garage Object Storage.
-* `/frontend` — React + Vite + TypeScript + TailwindCSS + framer-motion + PWA.
+* [`/backend`](./backend) — Express.js + TypeScript + Prisma ORM + S3/Garage Object Storage.
+* [`/frontend`](./frontend) — React + Vite + TypeScript + TailwindCSS + framer-motion + PWA.
 
 ---
 
-## 🛠️ Persiapan Lokal (Local Development)
+## 🛠️ Local Development Setup
 
-### 1. Prasyarat (Prerequisites)
-* Node.js (Aplikasi ini kompatibel dari Node.js v14 hingga v18+).
-* PostgreSQL database aktif (lokal atau cloud).
-* Credential Object Storage S3-Compatible (Garage/MinIO/AWS S3).
+### 1. Prerequisites
+* Node.js (Compatible with v14 through v18+).
+* Active PostgreSQL database (local or cloud).
+* S3-Compatible Object Storage credentials (Garage/MinIO/AWS S3).
 
-### 2. Konfigurasi Backend
-1. Masuk ke folder `/backend`:
+### 2. Backend Configuration
+
+1. Navigate to the [`/backend`](./backend) folder:
    ```bash
    cd backend
    ```
-2. Buat file `.env` (isi placeholder sudah disediakan di `.env` bawaan):
+2. Create a `.env` file (placeholder values are provided in the default `.env`):
    ```env
    DATABASE_URL="postgresql://user:password@localhost:5432/askativities?schema=public"
-   JWT_SECRET="isi-secret-jwt-anda"
+   JWT_SECRET="your-jwt-secret"
    FRONTEND_URL="http://localhost:5173"
    PORT=3000
 
@@ -34,57 +35,58 @@ Aplikasi pencatat poin bintang kebiasaan baik anak untuk memotivasi anak secara 
    S3_SECRET_ACCESS_KEY="your_secret_key"
    S3_BUCKET_NAME="poin-anak-avatars"
    ```
-3. Sinkronkan skema database & buat client Prisma:
+3. Sync the database schema and generate the Prisma client:
    ```bash
    npx prisma db push
    ```
-4. Masukkan data awal (seeds) ke database (membuat akun admin default, data anak, aktivitas, dan reward):
+4. Seed the database with initial data (creates default admin account, children data, activities, and rewards):
    ```bash
    npm run seed
    ```
-   * *Detail Admin Default*:
+   * *Default Admin Details*:
      * Email: `admin@poinanak.com`
      * Password: `adminpassword123`
 
-5. Jalankan server backend (mode dev):
+5. Run the backend server (dev mode):
    ```bash
    npm run dev
    ```
 
-### 3. Konfigurasi Frontend
-1. Masuk ke folder `/frontend`:
+### 3. Frontend Configuration
+
+1. Navigate to the [`/frontend`](./frontend) folder:
    ```bash
    cd ../frontend
    ```
-2. Jalankan aplikasi frontend (mode dev):
+2. Run the frontend application (dev mode):
    ```bash
    npm run dev
    ```
-3. Akses aplikasi melalui `http://localhost:5173`.
+3. Access the application at `http://localhost:5173`.
 
 ---
 
-## 🚀 Panduan Deployment di Coolify
+## 🚀 Deployment Guide on Coolify
 
-Aplikasi ini sangat mudah di-deploy di **Coolify** (Self-hosted VPS) menggunakan Git Integration dengan membuat **2 resource** di dalam satu project:
+This application is easy to deploy on **Coolify** (Self-hosted VPS) using Git Integration by creating **3 resources** within one project:
 
 ### 1. Resource 1: PostgreSQL Database (Built-in)
-* Buat service **PostgreSQL** bawaan dari Coolify.
-* Catat URL database-nya untuk dimasukkan ke env backend.
+* Create a **PostgreSQL** service using Coolify's built-in feature.
+* Note the database URL for the backend environment variables.
 
 ### 2. Resource 2: Backend (Express App - Dockerfile)
-* **Build Pack**: Pilih `Dockerfile`.
-* **Base Directory**: Set ke `/backend`.
+* **Build Pack**: Select `Dockerfile`.
+* **Base Directory**: Set to [`/backend`](./backend).
 * **Port**: `3000`.
 * **Environment Variables**:
-  * Set `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, dan credential `S3_*` untuk Garage.
-* **Auto Migration**: Dockerfile sudah dikonfigurasi untuk menjalankan `npx prisma migrate deploy` secara otomatis saat build selesai.
+  * Set `DATABASE_URL`, `JWT_SECRET`, `FRONTEND_URL`, and `S3_*` credentials for Garage.
+* **Auto Migration**: The Dockerfile is configured to automatically run `npx prisma migrate deploy` after the build completes.
 
 ### 3. Resource 3: Frontend (Vite Static Site)
-* **Build Pack**: Pilih `Static` atau `Nixpacks`.
-* **Base Directory**: Set ke `/frontend`.
-* **Port**: `80` (default static).
+* **Build Pack**: Select `Static` or `Nixpacks`.
+* **Base Directory**: Set to [`/frontend`](./frontend).
+* **Port**: `80` (default for static sites).
 * **Environment Variables**:
-  * Set `VITE_API_URL` mengarah ke URL domain backend Anda (misal: `https://api.poinanak.com`).
-* **SPA Redirection (PENTING)**:
-  * Di Coolify, pada bagian konfigurasi web server static, pastikan mengaktifkan routing fallback agar URL seperti `/admin` atau `/riwayat` tidak menghasilkan error 404 saat direfresh.
+  * Set `VITE_API_URL` pointing to your backend domain (e.g., `https://api.poinanak.com`).
+* **SPA Redirection (IMPORTANT)**:
+  * In Coolify, under the static web server configuration, make sure to enable fallback routing so that URLs like `/admin` or `/riwayat` don't return a 404 error when refreshed.

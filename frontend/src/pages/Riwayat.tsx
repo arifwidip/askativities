@@ -254,8 +254,8 @@ export const Riwayat: React.FC = () => {
                   return (
                     <motion.div
                       key={log.id}
-                      initial={{ opacity: prefersReducedMotion ? 0.7 : 0, y: prefersReducedMotion ? 0 : 8 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: prefersReducedMotion ? 0.7 : 0, transform: prefersReducedMotion ? 'translateY(0px)' : 'translateY(8px)' }}
+                      animate={{ opacity: 1, transform: 'translateY(0px)' }}
                       transition={prefersReducedMotion
                         ? { duration: 0.15, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }
                         : { type: 'spring', stiffness: 300, damping: 24, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }

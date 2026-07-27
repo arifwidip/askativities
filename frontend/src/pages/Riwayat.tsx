@@ -14,13 +14,14 @@ interface LogGroup {
 export const Riwayat: React.FC = () => {
   const { selectedChild, isLoading: isAppLoading, isAdmin, revokePoints, showConfirm } = useApp();
   const [logs, setLogs] = useState<PointLog[]>([]);
-  const [page, setPage] = useState<number>(1);
+  const [cursor, setCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [loadingInitial, setLoadingInitial] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [totalLogs, setTotalLogs] = useState<number>(0);
 
   const observerTarget = useRef<HTMLDivElement | null>(null);
+  const isFetchingRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
 
   const handleRevoke = async (log: PointLog) => {
@@ -66,38 +67,47 @@ export const Riwayat: React.FC = () => {
   };
 
   const fetchLogs = useCallback(
-    async (pageToFetch: number, resetList = false) => {
+    async (cursorToFetch: string | null = null, resetList = false) => {
       if (!selectedChild) return;
+      if (!resetList && isFetchingRef.current) return;
 
       if (resetList) {
         setLoadingInitial(true);
       } else {
         setLoadingMore(true);
       }
+      isFetchingRef.current = true;
 
       try {
-        const res = await api.get(`/children/${selectedChild.id}/logs`, {
-          params: { page: pageToFetch, limit: PAGE_LIMIT },
-        });
+        const params: Record<string, unknown> = { limit: PAGE_LIMIT };
+        if (cursorToFetch) params.cursor = cursorToFetch;
+
+        const res = await api.get(`/children/${selectedChild.id}/logs`, { params });
 
         const newLogs: PointLog[] = res.data.logs || [];
         const serverHasMore: boolean = Boolean(res.data.hasMore);
         const total: number = res.data.total || 0;
+        const nextCursor: string | null = res.data.nextCursor || null;
 
         if (resetList) {
           setLogs(newLogs);
         } else {
-          setLogs((prev) => [...prev, ...newLogs]);
+          setLogs((prev) => {
+            const existing = new Set(prev.map(l => l.id));
+            const deduped = newLogs.filter(l => !existing.has(l.id));
+            return [...prev, ...deduped];
+          });
         }
 
         setHasMore(serverHasMore);
         setTotalLogs(total);
-        setPage(pageToFetch);
+        setCursor(nextCursor);
       } catch (err) {
         console.error('Error fetching child logs:', err);
       } finally {
         setLoadingInitial(false);
         setLoadingMore(false);
+        isFetchingRef.current = false;
       }
     },
     [selectedChild]
@@ -106,9 +116,9 @@ export const Riwayat: React.FC = () => {
   // Reset and fetch initial page when selected child changes
   useEffect(() => {
     if (selectedChild) {
-      setPage(1);
+      setCursor(null);
       setHasMore(true);
-      fetchLogs(1, true);
+      fetchLogs(null, true);
     }
   }, [selectedChild?.id, fetchLogs]);
 
@@ -119,8 +129,8 @@ export const Riwayat: React.FC = () => {
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore && !loadingInitial && !loadingMore) {
-          fetchLogs(page + 1, false);
+        if (entries[0].isIntersecting && hasMore && !loadingInitial && !loadingMore && !isFetchingRef.current) {
+          fetchLogs(cursor, false);
         }
       },
       {
@@ -135,7 +145,7 @@ export const Riwayat: React.FC = () => {
     return () => {
       observer.disconnect();
     };
-  }, [hasMore, loadingInitial, loadingMore, page, selectedChild, fetchLogs]);
+  }, [hasMore, loadingInitial, loadingMore, cursor, selectedChild, fetchLogs]);
 
   // Group logs by date
   const groupedLogs = useMemo<LogGroup[]>(() => {
@@ -257,10 +267,10 @@ export const Riwayat: React.FC = () => {
                       initial={{ opacity: prefersReducedMotion ? 0.7 : 0, transform: prefersReducedMotion ? 'translateY(0px)' : 'translateY(8px)' }}
                       animate={{ opacity: 1, transform: 'translateY(0px)' }}
                       transition={prefersReducedMotion
-                        ? { duration: 0.15, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }
-                        : { type: 'spring', stiffness: 300, damping: 24, delay: Math.min((idx % PAGE_LIMIT) * 0.02, 0.2) }
+                        ? { duration: 0.15, delay: Math.min((idx % PAGE_LIMIT) * 0.03, 0.2) }
+                        : { type: 'spring', stiffness: 300, damping: 24, delay: Math.min((idx % PAGE_LIMIT) * 0.03, 0.2) }
                       }
-                      className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 hover:border-slate-200 transition-colors"
+                      className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm flex items-center justify-between gap-3 hover:border-slate-200"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         {/* Status Indicator Icon */}

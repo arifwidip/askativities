@@ -47,13 +47,12 @@ router.get('/:id', async (req, res): Promise<void> => {
   }
 });
 
-// GET /api/children/:id/logs - Public (Paginated logs for child)
+// GET /api/children/:id/logs - Public (Cursor-based paginated logs for child)
 router.get('/:id/logs', async (req, res): Promise<void> => {
   try {
     const { id } = req.params;
-    const page = Math.max(1, parseInt(req.query.page as string, 10) || 1);
+    const cursor = req.query.cursor as string | undefined;
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit as string, 10) || 15));
-    const skip = (page - 1) * limit;
 
     const child = await prisma.child.findUnique({ where: { id } });
     if (!child) {
@@ -64,22 +63,23 @@ router.get('/:id/logs', async (req, res): Promise<void> => {
     const [logs, total] = await prisma.$transaction([
       prisma.pointLog.findMany({
         where: { childId: id },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: limit + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       }),
       prisma.pointLog.count({
         where: { childId: id },
       }),
     ]);
 
-    const hasMore = skip + logs.length < total;
+    const hasMore = logs.length > limit;
+    if (hasMore) logs.pop();
+    const nextCursor = hasMore && logs.length > 0 ? logs[logs.length - 1].id : null;
 
     res.json({
       logs,
       total,
-      page,
-      limit,
+      nextCursor,
       hasMore,
     });
   } catch (error: any) {

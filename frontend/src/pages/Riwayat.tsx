@@ -281,7 +281,7 @@ export const Riwayat: React.FC = () => {
                         {isAdmin && (
                           <button
                             onClick={() => handleRevoke(log)}
-                            className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-all shrink-0"
+                            className="p-2 rounded-xl text-slate-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-rose-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-rose-50 active:scale-95 transition-[color,background-color,transform] shrink-0"
                             title={isEarn ? "Batalkan penambahan poin" : "Batalkan penukaran reward"}
                           >
                             <RotateCcw size={15} />

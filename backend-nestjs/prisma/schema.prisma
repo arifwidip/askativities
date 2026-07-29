@@ -1,0 +1,68 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Child {
+  id          String     @id @default(uuid())
+  name        String
+  avatarUrl   String     // URL gambar dari Object Storage Garage
+  totalPoints Int        @default(0)
+  logs        PointLog[]
+  createdAt   DateTime   @default(now())
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  icon        String   // Nama icon Lucide (misal: "check-circle")
+  points      Int
+  isDeleted   Boolean  @default(false) // Soft delete
+  createdAt   DateTime @default(now())
+}
+
+model Reward {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  icon        String
+  cost        Int
+  isDeleted   Boolean  @default(false) // Soft delete
+  createdAt   DateTime @default(now())
+}
+
+enum LogType {
+  EARN
+  REDEEM
+  DEDUCT
+}
+
+model PointLog {
+  id          String   @id @default(uuid())
+  childId     String
+  child       Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  
+  type        LogType
+  amount      Int      // Poin yang didapat (+) atau dikurangi (-)
+  
+  // Snapshots data agar riwayat tidak rusak jika Activity/Reward dihapus
+  title       String   // Judul aktivitas/reward saat kejadian
+  
+  // Hubungan opsional (Soft relation) dengan onDelete: SetNull
+  activityId  String?
+  rewardId    String?
+  
+  createdAt   DateTime @default(now())
+}

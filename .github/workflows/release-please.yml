@@ -1,0 +1,30 @@
+name: release-please
+
+# Automated release notes pipeline.
+#
+# On every push to `main`, release-please inspects Conventional Commits and
+# opens (or updates) a release PR per component (`backend`, `frontend`). Each
+# release PR bumps the component version, updates CHANGELOG.md, and captures
+# release notes. Merging a release PR creates a tagged GitHub release with the
+# generated notes.
+#
+# See CONTRIBUTING.md -> "Release process" for the human-side workflow.
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

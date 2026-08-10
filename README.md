@@ -6,6 +6,9 @@ A point tracking app for children's good habits, designed to motivate children p
 
 * [`/backend`](./backend) — Express.js + TypeScript + Prisma ORM + S3/Garage Object Storage.
 * [`/frontend`](./frontend) — React + Vite + TypeScript + TailwindCSS + framer-motion + PWA.
+* [`/docs`](./docs) — Project documentation (architecture, development, deployment).
+* [`/CONTRIBUTING.md`](./CONTRIBUTING.md) — Contribution workflow and commit conventions.
+* [`/CHANGELOG.md`](./CHANGELOG.md) — Release notes, generated automatically.
 
 ---
 
